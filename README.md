@@ -42,5 +42,15 @@ Across simulation scenarios, we vary preference rates (proportions of preference
 |                  1                   | Additive effects of treatment preference. Main effects of P<sub>1</sub> and P<sub>2</sub> only. |
 |                  2                   | Additive effects of treatment preference. Main effects of P<sub>1</sub> and P<sub>2</sub> and interaction effect (P<sub>1</sub>P<sub>2</sub>). |
 |                  3                   | Additive effects of treatment preference. Main effects of P<sub>1</sub> and P<sub>2</sub> and interactions with treatment (P<sub>1</sub>T<sub>1</sub> and P<sub>2</sub>T<sub>2</sub>) |
-|                  4                   | Multiplicative effects of treatment preference. Our methods assume additive effects and we wanted to test performance when this is violated. |
+|                  4                   | Multiplicative effects of treatment preference. Our methods assume additive effects and we wanted to test performance when this assumption is violated. |
 
+## Required Software
+JAGS
+
+## Analytic Methods
+
+Description
+
+Input:
+
+Output:
