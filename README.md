@@ -47,10 +47,27 @@ Across simulation scenarios, we vary preference rates (proportions of preference
 ## Required Software
 JAGS
 
-## Analytic Methods
+## Analytic Method 1: Standard BHM
 
 Description
 
 Input:
 
 Output:
+
+## Analytic Method 2: Exchangeability Nonexchangeability (EXNEX) Model 
+
+Description
+
+Input:
+
+Output:
+
+## Analytic Method 3: Hierarchical Dirichlet Process Mixture (DPM) Model
+
+Description
+
+Input:
+
+Output:
+
