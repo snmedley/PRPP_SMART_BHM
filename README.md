@@ -27,8 +27,12 @@ Code to generate PRPP-SMART data with a continuous stage 2 outcome can be found 
 
 Across simulation scenarios, we vary preference rates (proportions of preference vs. no preference at stages 1 and 2), response rates (probability of response to A and B at the end of stage 1), and the distribution of the final outcome across trial pathways. We fix the expected outcome for the indifference DTRs across trial pathways but vary the expected outcome in the preference DTRs to generate different *preference augmented DTR effect types*. The different simulation scenarios are described in the tables below. RData files containing the parameter values for different simulation scenarios can be found in the folder Scenarios. 
 
-| Preference Rate Scenario | Probability of Stage 1 Preference | Probability of Stage 2 Preference |
-| ------------------------ | --------------------------------- | --------------------------------- |
-|            a             |                 0.5               |                  0.5              |
-|            b             |                 0.5               |                  2/3              |
-|            c             |                 2/3               |                  2/3              |
+| Preference \& Response Rate Scenario | Probability of Stage 1 Preference | Probability of Stage 2 Preference | Probability of Response to A | Probability of Response to B |
+| ------------------------------------ | --------------------------------- | --------------------------------- | ---------------------------- | ---------------------------- |
+|                  a                   |                 0.5               |                  0.5              |               0.6            |              0.4             |
+|                  b                   |                 0.5               |                  2/3              |               0.6            |              0.4             |
+|                  c                   |                 2/3               |                  2/3              |               0.6            |              0.4             |
+|                  a'                  |                 0.5               |                  0.5              |               0.5            |              0.5             |
+|                  b'                  |                 0.5               |                  2/3              |               0.5            |              0.5             |
+|                  c'                  |                 2/3               |                  2/3              |               0.5            |              0.5             |
+
