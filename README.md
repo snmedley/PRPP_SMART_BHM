@@ -23,7 +23,7 @@ We denote trial pathways by A<sub>1P<sub>1</sub></sub> for responders and A<sub>
 We previously developed frequentist weighted and replicated regression method (WRRM) to estimate PRPP-SMART DTRs (with code in my repository [PRPP_SMART_WRRM_continuous](https://github.com/snmedley/PRPP_SMART_WRRM_continuous/tree/main)). However, this method conduct a fixed level of borrowing (i.e., the amount of data borrowing does not depend on the observed data) and incur bias in settings of moderate to large differences in expected outcomes between PRPP-SMART participants. Here, we present 3 Bayesian hierarchical modeling (BHM) methods to estimate PRPP-SMART DTRs which conduct dynamic borrowing. In the companion manuscript, we demonstrate that our BHM methods significantly reduce bias compared to WRRM in scenarios with moderate to large differences in expected outcomes. 
 
 ## Data Generation and Simulation Scenarios
-Code to generate PRPP-SMART data with a continuous stage 2 outcome can be found in my repository [PRPP_SMART_WRRM_continuous](https://github.com/snmedley/PRPP_SMART_WRRM_continuous/tree/main)).
+Code to generate PRPP-SMART data with a continuous stage 2 outcome can be found in my repository [PRPP_SMART_WRRM_continuous](https://github.com/snmedley/PRPP_SMART_WRRM_continuous/tree/main).
 
 Across simulation scenarios, we vary preference rates (proportions of preference vs. no preference at stages 1 and 2), response rates (probability of response to A and B at the end of stage 1), and the distribution of the final outcome across trial pathways. We fix the expected outcome for the indifference DTRs across trial pathways but vary the expected outcome in the preference DTRs to generate different *preference augmented DTR effect types*. The different simulation scenarios are described in the tables below. RData files containing the parameter values for different simulation scenarios can be found in the folder Scenarios. 
 
@@ -35,4 +35,12 @@ Across simulation scenarios, we vary preference rates (proportions of preference
 |                  a'                  |                 0.5               |                  0.5              |               0.5            |              0.5             |
 |                  b'                  |                 0.5               |                  2/3              |               0.5            |              0.5             |
 |                  c'                  |                 2/3               |                  2/3              |               0.5            |              0.5             |
+
+
+| Preference Augmented DTR Effect Type |          Description         |
+| ------------------------------------ | ---------------------------- |
+|                  1                   | Additive effects of treatment preference. Main effects of P<sub>1</sub> and P<sub>2</sub> only. |
+|                  2                   | Additive effects of treatment preference. Main effects of P<sub>1</sub> and P<sub>2</sub> and interaction effect (P<sub>1</sub>P<sub>2</sub>). |
+|                  3                   | Additive effects of treatment preference. Main effects of P<sub>1</sub> and P<sub>2</sub> and interactions with treatment (P<sub>1</sub>T<sub>1</sub> and P<sub>2</sub>T<sub>2</sub>) |
+|                  4                   | Multiplicative effects of treatment preference. Our methods assume additive effects and we wanted to test performance when this is violated. |
 
