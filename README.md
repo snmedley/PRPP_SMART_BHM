@@ -47,7 +47,7 @@ Across simulation scenarios, we vary preference rates (proportions of preference
 |                  4                   | Multiplicative effects of treatment preference. Our methods assume additive effects and we wanted to test performance when this assumption is violated. |
 
 ## Required Software
-JAGS
+In addition to R, these methods require JAGS for Bayesian modelling and the R package ```rjags```. Here is a [document](https://www.jkarreth.net/files/bayes-cph_Tutorial-JAGS.pdf) and [website](https://www.r-bloggers.com/2012/03/installing-and-running-jags-on-mac-os-10-5-8/) with installation instructions. Here is where you can find the [latest user manual](https://sourceforge.net/projects/mcmc-jags/files/Manuals/) for JAGS and a [great resource](https://pdixon.stat.iastate.edu/stat534/R/Intro%20exercise.pdf) for learning how to fit a model with ```rjags```.
 
 ## Analytic Method 1: Standard BHM and Traditional Bayesian Model (tBM)
 
