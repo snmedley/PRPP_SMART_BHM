@@ -22,6 +22,8 @@ We denote trial pathways by A<sub>1P<sub>1</sub></sub> for responders and A<sub>
 
 We previously developed frequentist weighted and replicated regression method (WRRM) to estimate PRPP-SMART DTRs (with code in my repository [PRPP_SMART_WRRM_continuous](https://github.com/snmedley/PRPP_SMART_WRRM_continuous/tree/main)). However, this method conduct a fixed level of borrowing (i.e., the amount of data borrowing does not depend on the observed data) and incur bias in settings of moderate to large differences in expected outcomes between PRPP-SMART participants. Here, we present 3 Bayesian hierarchical modeling (BHM) methods to estimate PRPP-SMART DTRs which conduct dynamic borrowing. In the companion manuscript, we demonstrate that our BHM methods significantly reduce bias compared to WRRM in scenarios with moderate to large differences in expected outcomes. 
 
+Note that our previous method estimated average outcomes directly at the DTR level while the methods presented here estimate average outcomes at the trial pathway then derive the DTR estimates. 
+
 ## Data Generation and Simulation Scenarios
 Code to generate PRPP-SMART data with a continuous stage 2 outcome can be found in my repository [PRPP_SMART_WRRM_continuous](https://github.com/snmedley/PRPP_SMART_WRRM_continuous/tree/main).
 
@@ -47,27 +49,53 @@ Across simulation scenarios, we vary preference rates (proportions of preference
 ## Required Software
 JAGS
 
-## Analytic Method 1: Standard BHM
+## Analytic Method 1: Standard BHM and Traditional Bayesian Model (tBM)
 
-Description
+The PRPP-SMART BHM approach is the simplest of the 3 but assumes the strongest level of homogeneity or similarity between the average outcomes of participants with different treatment preferences. The data model or likelihood assumes that outcomes at the trial pathway level are normally distributed with pathway-specific means. The parameter model assumes a relationship between the pathway-specific means or "random effects" which leads to data borrowing. In particular, we assume the random effects are also normally distributed, where the variance parameter known as the between source heterogeneity controls the amount of borrowing. 
+
+The code to implement a single simulation of the PRPP-SMART BHM approach also includes the code for the tBM approach which conducts no data borrowing. That is, it models all trial pathways independently. 
 
 Input:
+- Home Directory: set directory for file input by setting ```homedir```. All relevant files (data generation code, scenario .R files, etc.) must be in the same directory.
+- Output Directory: set directory for file output by setting ```outdir```. By default, this variable is set to ```homedir``` so that the input and output file directory are the same.
+- PRPP-SMART Sample Size: change the total trial size by setting ```N``` to an integer value.
+- Preference Rate Scenario: change the preference rate scenario by setting ```scenario``` = a, b, or c.
+- Preference Augmented DTR Effect Type: change the effect type by setting ```type``` = 1, 2, 3, or 4.
+- Preference Augmented DTR Effect Size: change the effect size by setting ```size``` = small, moderate, or large.
+- Data Variability: change the data variability at the trial pathway level by setting ```sigma2``` to a value greater than 0.
+- Other options fixed in the scenarios we consider such as intermediate response rates can also be changed. There is a description of input variables in the PRPP_SMART_DataGen_cts.R.
+- MCMC Settings: the default number of MCMC chains is 3 (```n_MCMC_chain```). The default length of the adaptation phase (```n.adapt```) is 5000 and of the burn-in phase (```n.burnin```) is 5000. After adaptation and burn-in, there are 100,000 total draws in each chain (```MCMC_SAMPLE```) and thinning of every 50th observation (```n.thin```) so that the number of posterior samples in each chain is 2000.
+- Prior Settings: set the priors for the mean parameters and between source heterogeneity for responders and non-responders. By default, loads ```Mu_Pior1.RData``` and ```Tau_Prior1.RData```
 
 Output:
+- MCMC diagnostics: Rhat and effective sample size (n_eff) for each parameter and DTR
+- Parameter estimates and SEs for BHM and tBM as separate CSV files. This includes estimates of the trial pathway means and other parameters. 
+- DTR estimates, SEs, and credible intervals for BHM and tBM as separate CSV files
 
 ## Analytic Method 2: Exchangeability Nonexchangeability (EXNEX) Model 
 
 Description
 
 Input:
+- Same inputs as Analytic Method 1
+- Additional Prior Settings: set the priors for the non-exchangeability parameters. By default, loads ```rMAC_Prior1.RData```
+- Prior probability of exchangeability: set the fixed prior mixing weights (```w```) for EXNEX. The default value is 0.5.
 
 Output:
+- MCMC diagnostics: Rhat and effective sample size (n_eff) for each parameter and DTR
+- Parameter estimates and SEs for EXNEX. This includes estimates of the trial pathway means and other parameters. 
+- DTR estimates, SEs, and credible intervals for EXNEX
 
 ## Analytic Method 3: Hierarchical Dirichlet Process Mixture (DPM) Model
 
 Description
 
 Input:
+- Same inputs as Analytic Method 1
+- Note that additional prior settings are fixed in the BUGS file, but can be changed manually
 
 Output:
-
+- MCMC diagnostics: Rhat and effective sample size (n_eff) for each parameter and DTR
+- Cluster diagnostics: number of clusters in the inner and outer DPMs. See Ohlssen, Sharples, and Spiegelhalter 2007 for more information on clustering diagnostics and an intro to DP/DPMs in general
+- Parameter estimates and SEs for EXNEX. This includes estimates of the trial pathway means and other parameters. 
+- DTR estimates, SEs, and credible intervals for EXNEX
