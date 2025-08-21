@@ -1,0 +1,95 @@
+model{
+	# Specify priors
+	# Note: use precision (1/sigma^2) in dnorm distribution in JAGS
+	# All individuals contribute to estimation of p_A and p_B
+	p_rand_A ~ dunif(0,1)
+	p_rand_B ~ dunif(0,1)
+	p_pref_A ~ dunif(0,1)
+	p_pref_B ~ dunif(0,1)
+	# no pooling analysis -- responders
+	theta_A_0 ~ dnorm(mu_A_p, pow(epsilon_p, -2))
+	theta_A_1 ~ dnorm(mu_A_p, pow(epsilon_p, -2))
+	theta_B_0 ~ dnorm(mu_B_p, pow(epsilon_p, -2))
+	theta_B_1 ~ dnorm(mu_B_p, pow(epsilon_p, -2))
+	# no pooling analysis -- 00 non-responders
+	theta_AC_00 ~ dnorm(mu_AC_p, pow(epsilon_p, -2))
+	theta_AD_00 ~ dnorm(mu_AD_p, pow(epsilon_p, -2))
+	theta_BC_00 ~ dnorm(mu_BC_p, pow(epsilon_p, -2)) 
+	theta_BD_00 ~ dnorm(mu_BD_p, pow(epsilon_p, -2))   
+	# no pooling analysis -- 01 non-responders
+	theta_AC_01 ~ dnorm(mu_AC_p, pow(epsilon_p, -2))
+	theta_AD_01 ~ dnorm(mu_AD_p, pow(epsilon_p, -2))
+	theta_BC_01 ~ dnorm(mu_BC_p, pow(epsilon_p, -2)) 
+	theta_BD_01 ~ dnorm(mu_BD_p, pow(epsilon_p, -2)) 
+	# no pooling analysis -- 10 non-responders
+	theta_AC_10 ~ dnorm(mu_AC_p, pow(epsilon_p, -2))
+	theta_AD_10 ~ dnorm(mu_AD_p, pow(epsilon_p, -2))
+	theta_BC_10 ~ dnorm(mu_BC_p, pow(epsilon_p, -2)) 
+	theta_BD_10 ~ dnorm(mu_BD_p, pow(epsilon_p, -2))   
+	# no pooling analysis -- 11 non-responders
+	theta_AC_11 ~ dnorm(mu_AC_p, pow(epsilon_p, -2))
+	theta_AD_11 ~ dnorm(mu_AD_p, pow(epsilon_p, -2))
+	theta_BC_11 ~ dnorm(mu_BC_p, pow(epsilon_p, -2)) 
+	theta_BD_11 ~ dnorm(mu_BD_p, pow(epsilon_p, -2))   
+		
+	# Data model
+	#Response likelihood
+	# Whether modeling a single response rate to A and B (i.e., does not depend on P1), need to
+	# estimate response rates separately for those randomized vs. preferring A in no pooling analysis
+    for (i in 1:N_rand_A) {
+		r_rand_A[i] ~ dbern(p_rand_A)
+	}
+	for (i in 1:N_rand_B) {
+		r_rand_B[i] ~ dbern(p_rand_B)
+	}
+	for (i in 1:N_pref_A) {
+		r_pref_A[i] ~ dbern(p_pref_A)
+	}
+	for (i in 1:N_pref_B) {
+		r_pref_B[i] ~ dbern(p_pref_B)
+	}
+	
+	
+	#Outcome likelihood (pathway means)
+	for (i in 1:N) {
+		theta[i] <- R[i]*T1[i]*(1-P1[i])*theta_A_0 +
+					R[i]*T1[i]*P1[i]*theta_A_1 +
+					R[i]*(1-T1[i])*(1-P1[i])*theta_B_0 +
+					R[i]*(1-T1[i])*P1[i]*theta_B_1 +
+					(1-R[i])*T1[i]*(1-P1[i])*T2[i]*(1-P2[i])*theta_AC_00 +
+					(1-R[i])*T1[i]*(1-P1[i])*T2[i]*P2[i]*theta_AC_01 +
+					(1-R[i])*T1[i]*P1[i]*T2[i]*(1-P2[i])*theta_AC_10 +
+					(1-R[i])*T1[i]*P1[i]*T2[i]*P2[i]*theta_AC_11 +
+					(1-R[i])*T1[i]*(1-P1[i])*(1-T2[i])*(1-P2[i])*theta_AD_00 +
+					(1-R[i])*T1[i]*(1-P1[i])*(1-T2[i])*P2[i]*theta_AD_01 +
+					(1-R[i])*T1[i]*P1[i]*(1-T2[i])*(1-P2[i])*theta_AD_10 +
+					(1-R[i])*T1[i]*P1[i]*(1-T2[i])*P2[i]*theta_AD_11 +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*T2[i]*(1-P2[i])*theta_BC_00 +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*T2[i]*P2[i]*theta_BC_01 +
+					(1-R[i])*(1-T1[i])*P1[i]*T2[i]*(1-P2[i])*theta_BC_10 +
+					(1-R[i])*(1-T1[i])*P1[i]*T2[i]*P2[i]*theta_BC_11 +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*(1-T2[i])*(1-P2[i])*theta_BD_00 +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*(1-T2[i])*P2[i]*theta_BD_01 +
+					(1-R[i])*(1-T1[i])*P1[i]*(1-T2[i])*(1-P2[i])*theta_BD_10 +
+					(1-R[i])*(1-T1[i])*P1[i]*(1-T2[i])*P2[i]*theta_BD_11
+		Y[i] ~ dnorm(theta[i], pow(s[i], -2))
+	}
+	
+	# DTRs
+	theta_AAC00 <- p_rand_A*theta_A_0 + (1-p_rand_A)*theta_AC_00
+	theta_AAD00 <- p_rand_A*theta_A_0 + (1-p_rand_A)*theta_AD_00
+	theta_BBC00 <- p_rand_B*theta_B_0 + (1-p_rand_B)*theta_BC_00
+	theta_BBD00 <- p_rand_B*theta_B_0 + (1-p_rand_B)*theta_BD_00
+	theta_AAC01 <- p_rand_A*theta_A_0 + (1-p_rand_A)*theta_AC_01
+	theta_AAD01 <- p_rand_A*theta_A_0 + (1-p_rand_A)*theta_AD_01
+	theta_BBC01 <- p_rand_B*theta_B_0 + (1-p_rand_B)*theta_BC_01
+	theta_BBD01 <- p_rand_B*theta_B_0 + (1-p_rand_B)*theta_BD_01
+	theta_AAC10 <- p_pref_A*theta_A_1 + (1-p_pref_A)*theta_AC_10
+	theta_AAD10 <- p_pref_A*theta_A_1 + (1-p_pref_A)*theta_AD_10
+	theta_BBC10 <- p_pref_B*theta_B_1 + (1-p_pref_B)*theta_BC_10
+	theta_BBD10 <- p_pref_B*theta_B_1 + (1-p_pref_B)*theta_BD_10
+	theta_AAC11 <- p_pref_A*theta_A_1 + (1-p_pref_A)*theta_AC_11
+	theta_AAD11 <- p_pref_A*theta_A_1 + (1-p_pref_A)*theta_AD_11
+	theta_BBC11 <- p_pref_B*theta_B_1 + (1-p_pref_B)*theta_BC_11
+	theta_BBD11 <- p_pref_B*theta_B_1 + (1-p_pref_B)*theta_BD_11
+}
