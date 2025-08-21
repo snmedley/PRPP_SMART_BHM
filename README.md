@@ -78,7 +78,7 @@ Output:
 To allow for additional heterogeneity compared to BHM, the EXNEX approach applies a mixture prior for the random effects distribution. The first mixture component is the exchangeability prior (identical to BHM) while the second is the non-exchangeability component, which applies an independent prior to each trial pathway. 
 
 Input:
-- Same inputs as Analytic Method 1
+- Same inputs as Analytic Method 1, except a different BUGS file
 - Additional Prior Settings: set the priors for the non-exchangeability parameters. By default, loads ```rMAC_Prior1.RData```
 - Prior probability of exchangeability: set the fixed prior mixing weights (```w```) for EXNEX. The default value is 0.5.
 
@@ -92,7 +92,7 @@ Output:
 This is the most complex model which allows for more heterogeneity than BHM and EXNEX. The Dirichlet Process Mixture is a nonparametric Bayesian prior for the random effects distribution. We allow for even more heterogeneity through a hierarchical DPM approach. 
 
 Input:
-- Same inputs as Analytic Method 1
+- Same inputs as Analytic Method 1, except a different BUGS file
 - Note that additional prior settings are fixed in the BUGS file, but can be changed manually
 
 Output:
