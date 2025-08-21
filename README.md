@@ -59,7 +59,7 @@ Input:
 - Home Directory: set directory for file input by setting ```homedir```. All relevant files (data generation code, scenario .R files, etc.) must be in the same directory.
 - Output Directory: set directory for file output by setting ```outdir```. By default, this variable is set to ```homedir``` so that the input and output file directory are the same.
 - PRPP-SMART Sample Size: change the total trial size by setting ```N``` to an integer value.
-- Preference Rate Scenario: change the preference rate scenario by setting ```scenario``` = a, b, or c.
+- Preference Rate Scenario: change the preference rate scenario by setting ```scenario``` = a, b, c, d, e, or f. Scenarios d, e, and f correspond to a', b', and c' in the table above.
 - Preference Augmented DTR Effect Type: change the effect type by setting ```type``` = 1, 2, 3, or 4.
 - Preference Augmented DTR Effect Size: change the effect size by setting ```size``` = small, moderate, or large.
 - Data Variability: change the data variability at the trial pathway level by setting ```sigma2``` to a value greater than 0.
