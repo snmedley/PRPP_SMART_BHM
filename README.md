@@ -64,7 +64,7 @@ Input:
 - Preference Augmented DTR Effect Size: change the effect size by setting ```size``` = small, moderate, or large.
 - Data Variability: change the data variability at the trial pathway level by setting ```sigma2``` to a value greater than 0.
 - Other options fixed in the scenarios we consider such as intermediate response rates can also be changed. There is a description of input variables in the PRPP_SMART_DataGen_cts.R.
-- BUGS file: Contains the model statement for JAGS. 
+- BUGS file: Contains the model statement for JAGS. Need to input BHM BUGS file and tBM BUGS file
 - MCMC Settings: the default number of MCMC chains is 3 (```n_MCMC_chain```). The default length of the adaptation phase (```n.adapt```) is 5000 and of the burn-in phase (```n.burnin```) is 5000. After adaptation and burn-in, there are 100,000 total draws in each chain (```MCMC_SAMPLE```) and thinning of every 50th observation (```n.thin```) so that the number of posterior samples in each chain is 2000.
 - Prior Settings: set the priors for the mean parameters and between source heterogeneity for responders and non-responders. By default, loads ```Mu_Pior1.RData``` and ```Tau_Prior1.RData```
 
