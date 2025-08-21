@@ -69,7 +69,7 @@ Input:
 - Prior Settings: set the priors for the mean parameters and between source heterogeneity for responders and non-responders. By default, loads ```Mu_Pior1.RData``` and ```Tau_Prior1.RData```
 
 Output:
-- MCMC diagnostics: Rhat and effective sample size (n_eff) for each parameter and DTR
+- MCMC diagnostics: Rhat and effective sample size (n_eff) for each parameter and DTR for BHM only
 - Parameter estimates and SEs for BHM and tBM as separate CSV files. This includes estimates of the trial pathway means and other parameters. 
 - DTR estimates, SEs, and credible intervals for BHM and tBM as separate CSV files
 
