@@ -74,7 +74,7 @@ Output:
 
 ## Analytic Method 2: Exchangeability Nonexchangeability (EXNEX) Model 
 
-Description
+To allow for additional heterogeneity compared to BHM, the EXNEX approach applies a mixture prior for the random effects distribution. The first mixture component is the exchangeability prior (identical to BHM) while the second is the non-exchangeability component, which applies an independent prior to each trial pathway. 
 
 Input:
 - Same inputs as Analytic Method 1
@@ -88,7 +88,7 @@ Output:
 
 ## Analytic Method 3: Hierarchical Dirichlet Process Mixture (DPM) Model
 
-Description
+This is the most complex model which allows for more heterogeneity than BHM and EXNEX. The Dirichlet Process Mixture is a nonparametric Bayesian prior for the random effects distribution. We allow for even more heterogeneity through a hierarchical DPM approach. 
 
 Input:
 - Same inputs as Analytic Method 1
