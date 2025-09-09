@@ -1,0 +1,140 @@
+model{
+	# Specify priors
+	# Note: use precision (1/sigma^2) in dnorm distribution in JAGS
+	mu_A ~ dnorm(mu_A_p, pow(epsilon_p, -2))
+	mu_B ~ dnorm(mu_B_p, pow(epsilon_p, -2))
+	mu_AC ~ dnorm(mu_AC_p, pow(epsilon_p, -2))
+	mu_AD ~ dnorm(mu_AD_p, pow(epsilon_p, -2))
+	mu_BC ~ dnorm(mu_BC_p, pow(epsilon_p, -2)) 
+	mu_BD ~ dnorm(mu_BD_p, pow(epsilon_p, -2))
+	omega ~ dnorm(omega_p, pow(epsilon_p, -2))	
+	delta1 ~ dnorm(delta1_p, pow(epsilon_p, -2))
+	delta2 ~ dnorm(delta2_p, pow(epsilon_p, -2))
+	p_A_0 ~ dunif(0,1)
+	p_A_1 ~ dunif(0,1)
+	p_B_0 ~ dunif(0,1)
+	p_B_1 ~ dunif(0,1)
+	tau_R ~ dnorm(0, pow(tau_sd, -2)) T(0,);
+	tau_NR ~ dnorm(0, pow(tau_sd, -2)) T(0,);	
+	# Truncate normal at 0 for half-normal in JAGS
+	# https://github.com/gertvv/gemtc/issues/23
+	
+	# Parameter model
+	#Z = latent variable for mixture model, one per pathway
+	for (j in 1:20){
+		Z[j] ~ dbern(w)
+	}
+	#exchangeable components -- identical to standard MAC approach
+	theta_A_0_ex ~ dnorm(mu_A, pow(tau_R, -2)) 
+	theta_A_1_ex ~ dnorm(mu_A, pow(tau_R, -2))
+	theta_AC_00_ex ~ dnorm(mu_AC, pow(tau_NR, -2))
+	theta_AC_01_ex ~ dnorm(mu_AC, pow(tau_NR, -2))
+	theta_AC_10_ex ~ dnorm(mu_AC, pow(tau_NR, -2))
+	theta_AC_11_ex ~ dnorm(mu_AC, pow(tau_NR, -2))
+	theta_AD_00_ex ~ dnorm(mu_AD, pow(tau_NR, -2))
+	theta_AD_01_ex ~ dnorm(mu_AD, pow(tau_NR, -2))
+	theta_AD_10_ex ~ dnorm(mu_AD, pow(tau_NR, -2))
+	theta_AD_11_ex ~ dnorm(mu_AD, pow(tau_NR, -2))
+	theta_B_0_ex ~ dnorm(mu_B, pow(tau_R, -2)) 
+	theta_B_1_ex ~ dnorm(mu_B, pow(tau_R, -2))
+	theta_BC_00_ex ~ dnorm(mu_BC, pow(tau_NR, -2))
+	theta_BC_01_ex ~ dnorm(mu_BC + delta2, pow(tau_NR, -2))
+	theta_BC_10_ex ~ dnorm(mu_BC, pow(tau_NR, -2))
+	theta_BC_11_ex ~ dnorm(mu_BC, pow(tau_NR, -2))
+	theta_BD_00_ex ~ dnorm(mu_BD, pow(tau_NR, -2))
+	theta_BD_01_ex ~ dnorm(mu_BD, pow(tau_NR, -2))
+	theta_BD_10_ex ~ dnorm(mu_BD, pow(tau_NR, -2))
+	theta_BD_11_ex ~ dnorm(mu_BD, pow(tau_NR, -2))
+	#non-exchangeable components -- non-informative
+	theta_A_0_nex ~ dnorm(m_A_0, pow(nu, -2))
+	theta_A_1_nex ~ dnorm(m_A_1, pow(nu, -2))
+	theta_AC_00_nex ~ dnorm(m_AC_00, pow(nu, -2))
+	theta_AC_01_nex ~ dnorm(m_AC_01, pow(nu, -2))
+	theta_AC_10_nex ~ dnorm(m_AC_10, pow(nu, -2))
+	theta_AC_11_nex ~ dnorm(m_AC_11, pow(nu, -2))
+	theta_AD_00_nex ~ dnorm(m_AD_00, pow(nu, -2))
+	theta_AD_01_nex ~ dnorm(m_AD_01, pow(nu, -2))
+	theta_AD_10_nex ~ dnorm(m_AD_10, pow(nu, -2))
+	theta_AD_11_nex ~ dnorm(m_AD_11, pow(nu, -2))
+	theta_B_0_nex ~ dnorm(m_B_0, pow(nu, -2))
+	theta_B_1_nex ~ dnorm(m_B_1, pow(nu, -2))
+	theta_BC_00_nex ~ dnorm(m_BC_00, pow(nu, -2))
+	theta_BC_01_nex ~ dnorm(m_BC_01, pow(nu, -2))
+	theta_BC_10_nex ~ dnorm(m_BC_10, pow(nu, -2))
+	theta_BC_11_nex ~ dnorm(m_BC_11, pow(nu, -2))
+	theta_BD_00_nex ~ dnorm(m_BD_00, pow(nu, -2))
+	theta_BD_01_nex ~ dnorm(m_BD_01, pow(nu, -2))
+	theta_BD_10_nex ~ dnorm(m_BD_10, pow(nu, -2))
+	theta_BD_11_nex ~ dnorm(m_BD_11, pow(nu, -2))
+	#robust priors for theta's are a mixture of exchangeable and non-exchangeable components
+	theta_A_0 <- Z[1] * theta_A_0_ex + (1 - Z[1]) * theta_A_0_nex
+	theta_A_1 <- Z[2] * theta_A_1_ex + (1 - Z[2]) * theta_A_1_nex
+	theta_AC_00 <- Z[3] * theta_AC_00_ex + (1 - Z[3]) * theta_AC_00_nex
+	theta_AC_01 <- Z[4] * theta_AC_01_ex + (1 - Z[4]) * theta_AC_01_nex
+	theta_AC_10 <- Z[5] * theta_AC_10_ex + (1 - Z[5]) * theta_AC_10_nex
+	theta_AC_11 <- Z[6] * theta_AC_11_ex + (1 - Z[6]) * theta_AC_11_nex
+	theta_AD_00 <- Z[7] * theta_AD_00_ex + (1 - Z[7]) * theta_AD_00_nex
+	theta_AD_01 <- Z[8] * theta_AD_01_ex + (1 - Z[8]) * theta_AD_01_nex
+	theta_AD_10 <- Z[9] * theta_AD_10_ex + (1 - Z[9]) * theta_AD_10_nex
+	theta_AD_11 <- Z[10] * theta_AD_11_ex + (1 - Z[10]) * theta_AD_11_nex
+	theta_B_0 <- Z[11] * theta_B_0_ex + (1 - Z[11]) * theta_B_0_nex
+	theta_B_1 <- Z[12] * theta_B_1_ex + (1 - Z[12]) * theta_B_1_nex
+	theta_BC_00 <- Z[13] * theta_BC_00_ex + (1 - Z[13]) * theta_BC_00_nex
+	theta_BC_01 <- Z[14] * theta_BC_01_ex + (1 - Z[14]) * theta_BC_01_nex
+	theta_BC_10 <- Z[15] * theta_BC_10_ex + (1 - Z[15]) * theta_BC_10_nex
+	theta_BC_11 <- Z[16] * theta_BC_11_ex + (1 - Z[16]) * theta_BC_11_nex
+	theta_BD_00 <- Z[17] * theta_BD_00_ex + (1 - Z[17]) * theta_BD_00_nex
+	theta_BD_01 <- Z[18] * theta_BD_01_ex + (1 - Z[18]) * theta_BD_01_nex
+	theta_BD_10 <- Z[19] * theta_BD_10_ex + (1 - Z[19]) * theta_BD_10_nex
+	theta_BD_11 <- Z[20] * theta_BD_11_ex + (1 - Z[20]) * theta_BD_11_nex
+		
+	# Data model
+    for (i in 1:N) {
+		# response likelihood
+		p[i] <- p_A_0*T1[i]*(1-P1[i]) + 
+		        p_A_1*T1[i]*P1[i] + 
+		        p_B_0*(1-T1[i])*(1-P1[i]) + 
+				p_B_1*(1-T1[i])*P1[i]
+		R[i] ~ dbern(p[i])
+		# outcome likelihood, depends on response
+		theta[i] <- R[i]*T1[i]*(1-P1[i])*theta_A_0 +
+					R[i]*T1[i]*P1[i]*theta_A_1 +
+					R[i]*(1-T1[i])*(1-P1[i])*theta_B_0 +
+					R[i]*(1-T1[i])*P1[i]*theta_B_1 +
+					(1-R[i])*T1[i]*(1-P1[i])*T2[i]*(1-P2[i])*theta_AC_00 +
+					(1-R[i])*T1[i]*(1-P1[i])*T2[i]*P2[i]*theta_AC_01 +
+					(1-R[i])*T1[i]*P1[i]*T2[i]*(1-P2[i])*theta_AC_10 +
+					(1-R[i])*T1[i]*P1[i]*T2[i]*P2[i]*theta_AC_11 +
+					(1-R[i])*T1[i]*(1-P1[i])*(1-T2[i])*(1-P2[i])*theta_AD_00 +
+					(1-R[i])*T1[i]*(1-P1[i])*(1-T2[i])*P2[i]*theta_AD_01 +
+					(1-R[i])*T1[i]*P1[i]*(1-T2[i])*(1-P2[i])*theta_AD_10 +
+					(1-R[i])*T1[i]*P1[i]*(1-T2[i])*P2[i]*theta_AD_11 +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*T2[i]*(1-P2[i])*theta_BC_00 +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*T2[i]*P2[i]*theta_BC_01 +
+					(1-R[i])*(1-T1[i])*P1[i]*T2[i]*(1-P2[i])*theta_BC_10 +
+					(1-R[i])*(1-T1[i])*P1[i]*T2[i]*P2[i]*theta_BC_11 +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*(1-T2[i])*(1-P2[i])*theta_BD_00 +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*(1-T2[i])*P2[i]*theta_BD_01 +
+					(1-R[i])*(1-T1[i])*P1[i]*(1-T2[i])*(1-P2[i])*theta_BD_10 +
+					(1-R[i])*(1-T1[i])*P1[i]*(1-T2[i])*P2[i]*theta_BD_11
+		Y[i] ~ dnorm(theta[i] + omega*R[i]*P1[i] + delta1*(1-R[i])*P1[i] + delta2*(1-R[i])*P2[i], pow(s[i], -2))
+	}
+	
+	# DTRs
+	theta_AAC00 <- p_A_0*theta_A_0 + (1-p_A_0)*theta_AC_00
+	theta_AAC01 <- p_A_0*theta_A_0 + (1-p_A_0)*(theta_AC_01 + delta2)
+	theta_AAC10 <- p_A_1*(theta_A_1 + omega) + (1-p_A_1)*(theta_AC_10 + delta1)
+	theta_AAC11 <- p_A_1*(theta_A_1 + omega) + (1-p_A_1)*(theta_AC_11 + delta1 + delta2)
+	theta_AAD00 <- p_A_0*theta_A_0 + (1-p_A_0)*theta_AD_00
+	theta_AAD01 <- p_A_0*theta_A_0 + (1-p_A_0)*(theta_AD_01 + delta2)
+	theta_AAD10 <- p_A_1*(theta_A_1 + omega) + (1-p_A_1)*(theta_AD_10 + delta1)
+	theta_AAD11 <- p_A_1*(theta_A_1 + omega) + (1-p_A_1)*(theta_AD_11 + delta1 + delta2)
+	theta_BBC00 <- p_B_0*theta_B_0 + (1-p_B_0)*theta_BC_00
+	theta_BBC01 <- p_B_0*theta_B_0 + (1-p_B_0)*(theta_BC_01 + delta2)
+	theta_BBC10 <- p_B_1*(theta_B_1 + omega) + (1-p_B_1)*(theta_BC_10 + delta1)
+	theta_BBC11 <- p_B_1*(theta_B_1 + omega) + (1-p_B_1)*(theta_BC_11 + delta1 + delta2)
+	theta_BBD00 <- p_B_0*theta_B_0 + (1-p_B_0)*theta_BD_00
+	theta_BBD01 <- p_B_0*theta_B_0 + (1-p_B_0)*(theta_BD_01 + delta2)
+	theta_BBD10 <- p_B_1*(theta_B_1 + omega) + (1-p_B_1)*(theta_BD_10 + delta1)
+	theta_BBD11 <- p_B_1*(theta_B_1 + omega) + (1-p_B_1)*(theta_BD_11 + delta1 + delta2)
+}

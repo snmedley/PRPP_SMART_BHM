@@ -1,0 +1,231 @@
+model{
+	### Specify priors
+	# Note: use precision (1/sigma^2) in dnorm distribution in JAGS
+	omega ~ dnorm(omega_p, pow(epsilon_p, -2))
+	delta1 ~ dnorm(delta1_p, pow(epsilon_p, -2))
+	delta2 ~ dnorm(delta2_p, pow(epsilon_p, -2))
+	p_A_0 ~ dunif(0,1)
+	p_A_1 ~ dunif(0,1)
+	p_B_0 ~ dunif(0,1)
+	p_B_1 ~ dunif(0,1)
+	tau_R ~ dnorm(0, pow(tau_sd, -2)) T(0,);
+	tau_NR ~ dnorm(0, pow(tau_sd, -2)) T(0,);
+	prec.v2 <- pow(v, -2)
+	prec.tau2.r <- pow(tau_R, -2)
+	prec.tau2.nr <- pow(tau_NR, -2)
+	# Truncate normal at 0 for half-normal in JAGS
+	# https://github.com/gertvv/gemtc/issues/23
+	alpha_R_A ~ dunif(lb.alpha, ub.alpha)
+	alpha_R_B ~ dunif(lb.alpha, ub.alpha)
+	alpha_NR_AC ~ dunif(lb.alpha, ub.alpha)
+	alpha_NR_AD ~ dunif(lb.alpha, ub.alpha)
+	alpha_NR_BC ~ dunif(lb.alpha, ub.alpha)
+	alpha_NR_BD ~ dunif(lb.alpha, ub.alpha)
+	gamma_R_A ~ dunif(lb.gamma, ub.gamma)
+	gamma_R_B ~ dunif(lb.gamma, ub.gamma)
+	gamma_NR_AC ~ dunif(lb.gamma, ub.gamma)
+	gamma_NR_AD ~ dunif(lb.gamma, ub.gamma)
+	gamma_NR_BC ~ dunif(lb.gamma, ub.gamma)
+	gamma_NR_BD ~ dunif(lb.gamma, ub.gamma)
+	# DPM concentration parameters
+	
+	### Parameter model - separate hierarchical DPMs for A vs. B pathways (responders)
+	# Sample from inner stick-breaking processes -- allow for each pathway to potentially have its own mean
+	u0_A ~ dbeta(1, gamma_R_A) T(0.000001,0.999999)
+	u0_B ~ dbeta(1, gamma_R_B) T(0.000001,0.999999)
+	for(k in 1:2){
+		mu0.mix.A[k] ~ dnorm(mu_A_p, prec.v2)
+		mu0.mix.B[k] ~ dnorm(mu_B_p, prec.v2)
+	}
+	# Compute inner mixing weights
+	w0_A[1] <- u0_A
+	w0_A[2] <- (1-u0_A)
+	w0_B[1] <- u0_B
+	w0_B[2] <- (1-u0_B)
+	# Sample inner latent variables and from outer stick-breaking process
+	for(k in 1:2){
+		z0_A[k] ~ dcat(w0_A[])
+		u_A[k] ~ dbeta(1, alpha_R_A) T(0.000001,0.999999)
+		mu.mix.A[k] ~ dnorm(mu0.mix.A[z0_A[k]], prec.tau2.r) 
+		z0_B[k] ~ dcat(w0_B[])
+		u_B[k] ~ dbeta(1, alpha_R_B) T(0.000001,0.999999)
+		mu.mix.B[k] ~ dnorm(mu0.mix.B[z0_B[k]], prec.tau2.r)
+	}
+	# Compute outer mixing weights
+	w_A[1] <- u_A[1]
+	w_A[2] <- (1 - u_A[1])
+	w_B[1] <- u_B[1]
+	w_B[2] <- (1 - u_B[1])
+	# Sample outer latent variables
+	for(k in 1:2){
+		z_A[k] ~ dcat(w_A[])
+		theta_A[k] <- mu.mix.A[z_A[k]]
+		z_B[k] ~ dcat(w_B[])
+		theta_B[k] <- mu.mix.B[z_B[k]]
+	}
+	
+	### Parameter model -- separate hierarchical DPMs for AC, AD, BC, and BD pathways (non-responders)
+	# Sample from inner stick-breaking processes -- allow for each pathway to potentially have its own mean
+	for(k in 1:4){
+		u0_AC[k] ~ dbeta(1, gamma_NR_AC) T(0.000001,0.999999)
+		mu0.mix.AC[k] ~ dnorm(mu_AC_p, prec.v2)
+		u0_AD[k] ~ dbeta(1, gamma_NR_AD) T(0.000001,0.999999)
+		mu0.mix.AD[k] ~ dnorm(mu_AD_p, prec.v2)
+		u0_BC[k] ~ dbeta(1, gamma_NR_BC) T(0.000001,0.999999)
+		mu0.mix.BC[k] ~ dnorm(mu_BC_p, prec.v2)
+		u0_BD[k] ~ dbeta(1, gamma_NR_BD) T(0.000001,0.999999)
+		mu0.mix.BD[k] ~ dnorm(mu_BD_p, prec.v2)
+	}
+	# Compute inner mixing weights
+	w0_AC[1] <- u0_AC[1]
+	w0_AD[1] <- u0_AD[1]
+	w0_BC[1] <- u0_BC[1]
+	w0_BD[1] <- u0_BD[1]
+	for(k in 2:3){
+		w0_AC[k] <- u0_AC[k] * (1 - u0_AC[k-1]) * w0_AC[k-1] / u0_AC[k-1]
+		w0_AD[k] <- u0_AD[k] * (1 - u0_AD[k-1]) * w0_AD[k-1] / u0_AD[k-1]
+		w0_BC[k] <- u0_BC[k] * (1 - u0_BC[k-1]) * w0_BC[k-1] / u0_BC[k-1]
+		w0_BD[k] <- u0_BD[k] * (1 - u0_BD[k-1]) * w0_BD[k-1] / u0_BD[k-1]
+	}
+	w0_AC[4] <- (1 - u0_AC[3]) * w0_AC[3] / u0_AC[3]
+	w0_AD[4] <- (1 - u0_AD[3]) * w0_AD[3] / u0_AD[3]
+	w0_BC[4] <- (1 - u0_BC[3]) * w0_BC[3] / u0_BC[3]
+	w0_BD[4] <- (1 - u0_BD[3]) * w0_BD[3] / u0_BD[3]
+	# Sample inner latent variables and from outer stick-breaking process
+	for(k in 1:4){
+		z0_AC[k] ~ dcat(w0_AC[])
+		u_AC[k] ~ dbeta(1, alpha_NR_AC) T(0.000001,0.999999)
+		mu.mix.AC[k] ~ dnorm(mu0.mix.AC[z0_AC[k]], prec.tau2.nr) 
+		z0_AD[k] ~ dcat(w0_AD[])
+		u_AD[k] ~ dbeta(1, alpha_NR_AD) T(0.000001,0.999999)
+		mu.mix.AD[k] ~ dnorm(mu0.mix.AD[z0_AD[k]], prec.tau2.nr) 
+		z0_BC[k] ~ dcat(w0_BC[])
+		u_BC[k] ~ dbeta(1, alpha_NR_BC) T(0.000001,0.999999)
+		mu.mix.BC[k] ~ dnorm(mu0.mix.BC[z0_BC[k]], prec.tau2.nr)
+		z0_BD[k] ~ dcat(w0_BD[])
+		u_BD[k] ~ dbeta(1, alpha_NR_BD) T(0.000001,0.999999)
+		mu.mix.BD[k] ~ dnorm(mu0.mix.BD[z0_BD[k]], prec.tau2.nr) 		
+	}
+	# Compute outer mixing weights
+	w_AC[1] <- u_AC[1]
+	w_AD[1] <- u_AD[1]
+	w_BC[1] <- u_BC[1]
+	w_BD[1] <- u_BD[1]
+	for(k in 2:3){
+		w_AC[k] <- u_AC[k] * (1 - u_AC[k-1]) * w_AC[k-1] / u_AC[k-1]
+		w_AD[k] <- u_AD[k] * (1 - u_AD[k-1]) * w_AD[k-1] / u_AD[k-1]
+		w_BC[k] <- u_BC[k] * (1 - u_BC[k-1]) * w_BC[k-1] / u_BC[k-1]
+		w_BD[k] <- u_BD[k] * (1 - u_BD[k-1]) * w_BD[k-1] / u_BD[k-1]
+	}
+	w_AC[4] <- (1 - u_AC[3]) * w_AC[3] / u_AC[3]
+	w_AD[4] <- (1 - u_AD[3]) * w_AD[3] / u_AD[3]
+	w_BC[4] <- (1 - u_BC[3]) * w_BC[3] / u_BC[3]
+	w_BD[4] <- (1 - u_BD[3]) * w_BD[3] / u_BD[3]
+	# Sample outer latent variables
+	for(k in 1:4){
+		z_AC[k] ~ dcat(w_AC[])
+		theta_AC[k] <- mu.mix.AC[z_AC[k]]
+		z_AD[k] ~ dcat(w_AD[])
+		theta_AD[k] <- mu.mix.AD[z_AD[k]]
+		z_BC[k] ~ dcat(w_BC[])
+		theta_BC[k] <- mu.mix.BC[z_BC[k]]
+		z_BD[k] ~ dcat(w_BD[])
+		theta_BD[k] <- mu.mix.BD[z_BD[k]]
+	}
+	
+	### Data model
+    for (i in 1:N) {
+		# response likelihood
+		p[i] <- p_A_0*T1[i]*(1-P1[i]) + 
+		        p_A_1*T1[i]*P1[i] + 
+		        p_B_0*(1-T1[i])*(1-P1[i]) + 
+				p_B_1*(1-T1[i])*P1[i]
+		R[i] ~ dbern(p[i])
+		# outcome likelihood, depends on response
+		theta[i] <- R[i]*T1[i]*(1-P1[i])*theta_A[1] +
+					R[i]*T1[i]*P1[i]*theta_A[2] +
+					R[i]*(1-T1[i])*(1-P1[i])*theta_B[1] +
+					R[i]*(1-T1[i])*P1[i]*theta_B[2] +
+					(1-R[i])*T1[i]*(1-P1[i])*T2[i]*(1-P2[i])*theta_AC[1] +
+					(1-R[i])*T1[i]*(1-P1[i])*T2[i]*P2[i]*theta_AC[2] +
+					(1-R[i])*T1[i]*P1[i]*T2[i]*(1-P2[i])*theta_AC[3] +
+					(1-R[i])*T1[i]*P1[i]*T2[i]*P2[i]*theta_AC[4] +
+					(1-R[i])*T1[i]*(1-P1[i])*(1-T2[i])*(1-P2[i])*theta_AD[1] +
+					(1-R[i])*T1[i]*(1-P1[i])*(1-T2[i])*P2[i]*theta_AD[2] +
+					(1-R[i])*T1[i]*P1[i]*(1-T2[i])*(1-P2[i])*theta_AD[3] +
+					(1-R[i])*T1[i]*P1[i]*(1-T2[i])*P2[i]*theta_AD[4] +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*T2[i]*(1-P2[i])*theta_BC[1] +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*T2[i]*P2[i]*theta_BC[2] +
+					(1-R[i])*(1-T1[i])*P1[i]*T2[i]*(1-P2[i])*theta_BC[3] +
+					(1-R[i])*(1-T1[i])*P1[i]*T2[i]*P2[i]*theta_BC[4] +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*(1-T2[i])*(1-P2[i])*theta_BD[1] +
+					(1-R[i])*(1-T1[i])*(1-P1[i])*(1-T2[i])*P2[i]*theta_BD[2] +
+					(1-R[i])*(1-T1[i])*P1[i]*(1-T2[i])*(1-P2[i])*theta_BD[3] +
+					(1-R[i])*(1-T1[i])*P1[i]*(1-T2[i])*P2[i]*theta_BD[4]
+		Y[i] ~ dnorm(theta[i] + omega*R[i]*P1[i] + delta1*(1-R[i])*P1[i] + delta2*(1-R[i])*P2[i], pow(s[i], -2))
+	}
+	
+	### Cluster diagnostics
+	for(k in 1:2){
+		for(kk in 1:2){
+			gind_A[k,kk] <- equals(k, z0_A[kk])
+			gind_B[k,kk] <- equals(k, z0_B[kk])
+			hind_A[k,kk] <- equals(k, z_A[z0_A[kk]])
+			hind_B[k,kk] <- equals(k, z_B[z0_B[kk]])
+		}
+		ctosum_A_0[k] <- step(sum(gind_A[k, ]) - 0.01)
+		ctosum_B_0[k] <- step(sum(gind_B[k, ]) - 0.01)
+		ctosum_A[k] <- step(sum(hind_A[k, ]) - 0.01)
+		ctosum_B[k] <- step(sum(hind_B[k, ]) - 0.01)
+	}
+    for (k in 1:4){
+        for (kk in 1:4) {
+		  gind_AC[k,kk] <- equals(k, z0_AC[kk])
+		  gind_AD[k,kk] <- equals(k, z0_AD[kk])
+		  gind_BC[k,kk] <- equals(k, z0_BC[kk])
+		  gind_BD[k,kk] <- equals(k, z0_BD[kk])
+		  hind_AC[k,kk] <- equals(k, z_AC[z0_AC[kk]])
+		  hind_AD[k,kk] <- equals(k, z_AD[z0_AD[kk]])
+		  hind_BC[k,kk] <- equals(k, z_BC[z0_BC[kk]])
+		  hind_BD[k,kk] <- equals(k, z_BD[z0_BD[kk]])
+        }
+		ctosum_AC_0[k] <- step(sum(gind_AC[k, ]) - 0.01)
+		ctosum_AD_0[k] <- step(sum(gind_AD[k, ]) - 0.01)
+		ctosum_BC_0[k] <- step(sum(gind_BC[k, ]) - 0.01)
+		ctosum_BD_0[k] <- step(sum(gind_BD[k, ]) - 0.01)
+		ctosum_AC[k] <- step(sum(hind_AC[k, ]) - 0.01)
+		ctosum_AD[k] <- step(sum(hind_AD[k, ]) - 0.01)
+		ctosum_BC[k] <- step(sum(hind_BC[k, ]) - 0.01)
+		ctosum_BD[k] <- step(sum(hind_BD[k, ]) - 0.01)
+    }
+     nmeans_A <- sum(ctosum_A_0[])
+	 nmeans_B <- sum(ctosum_B_0[])
+	 nmeans_AC <- sum(ctosum_AC_0[])
+	 nmeans_AD <- sum(ctosum_AD_0[])
+	 nmeans_BC <- sum(ctosum_BC_0[])
+	 nmeans_BD <- sum(ctosum_BD_0[])
+	 nclass_A <- sum(ctosum_A[])
+	 nclass_B <- sum(ctosum_B[])
+	 nclass_AC <- sum(ctosum_AC[])
+	 nclass_AD <- sum(ctosum_AD[])
+	 nclass_BC <- sum(ctosum_BC[])
+	 nclass_BD <- sum(ctosum_BD[])
+	
+	## DTRs
+	theta_AAC00 <- p_A_0*theta_A[1] + (1-p_A_0)*theta_AC[1]
+	theta_AAC01 <- p_A_0*theta_A[1] + (1-p_A_0)*(theta_AC[2] + delta2)
+	theta_AAC10 <- p_A_1*(theta_A[2] + omega) + (1-p_A_1)*(theta_AC[3] + delta1)
+	theta_AAC11 <- p_A_1*(theta_A[2] + omega) + (1-p_A_1)*(theta_AC[4] + delta1 + delta2)
+	theta_AAD00 <- p_A_0*theta_A[1] + (1-p_A_0)*theta_AD[1]
+	theta_AAD01 <- p_A_0*theta_A[1] + (1-p_A_0)*(theta_AD[2] + delta2)
+	theta_AAD10 <- p_A_1*(theta_A[2] + omega) + (1-p_A_1)*(theta_AD[3] + delta1)
+	theta_AAD11 <- p_A_1*(theta_A[2] + omega) + (1-p_A_1)*(theta_AD[4] + delta1 + delta2)
+	theta_BBC00 <- p_B_0*theta_B[1] + (1-p_B_0)*theta_BC[1]
+	theta_BBC01 <- p_B_0*theta_B[1] + (1-p_B_0)*(theta_BC[2] + delta2)
+	theta_BBC10 <- p_B_1*(theta_B[2] + omega) + (1-p_B_1)*(theta_BC[3] + delta1)
+	theta_BBC11 <- p_B_1*(theta_B[2] + omega) + (1-p_B_1)*(theta_BC[4] + delta1 + delta2)
+	theta_BBD00 <- p_B_0*theta_B[1] + (1-p_B_0)*theta_BD[1]
+	theta_BBD01 <- p_B_0*theta_B[1] + (1-p_B_0)*(theta_BD[2] + delta2)
+	theta_BBD10 <- p_B_1*(theta_B[2] + omega) + (1-p_B_1)*(theta_BD[3] + delta1)
+	theta_BBD11 <- p_B_1*(theta_B[2] + omega) + (1-p_B_1)*(theta_BD[4] + delta1 + delta2)
+}
