@@ -56,7 +56,7 @@ The PRPP-SMART BHM approach is the simplest of the 3 but assumes the strongest l
 The code to implement a single simulation of the PRPP-SMART BHM approach also includes the code for the tBM approach which conducts no data borrowing. That is, it models all trial pathways independently. 
 
 Input:
-- Home Directory: set directory for file input by setting ```homedir```. All relevant files (data generation code, scenario .R files, etc.) must be in the same directory.
+- Home Directory: set directory for file input by setting ```homedir```. All relevant files (data generation code, scenario .R files, etc.) must be stored in directories following the structure of this repository.
 - Output Directory: set directory for file output by setting ```outdir```. By default, this variable is set to ```homedir``` so that the input and output file directory are the same.
 - PRPP-SMART Sample Size: change the total trial size by setting ```N``` to an integer value.
 - Preference Rate Scenario: change the preference rate scenario by setting ```scenario``` = a, b, c, d, e, or f. Scenarios d, e, and f correspond to a', b', and c' in the table above.
