@@ -25,9 +25,7 @@ We previously developed frequentist weighted and replicated regression method (W
 Note that our previous method estimated average outcomes directly at the DTR level while the methods presented here estimate average outcomes at the trial pathway then derive the DTR estimates. 
 
 ## Data Generation and Simulation Scenarios
-Code to generate PRPP-SMART data with a continuous stage 2 outcome can be found in my repository [PRPP_SMART_WRRM_continuous](https://github.com/snmedley/PRPP_SMART_WRRM_continuous/tree/main).
-
-Across simulation scenarios, we vary preference rates (proportions of preference vs. no preference at stages 1 and 2), response rates (probability of response to A and B at the end of stage 1), and the distribution of the final outcome across trial pathways. We fix the expected outcome for the indifference DTRs across trial pathways but vary the expected outcome in the preference DTRs to generate different *preference augmented DTR effect types*. The different simulation scenarios are described in the tables below. RData files containing the parameter values for different simulation scenarios can be found in the folder Scenarios. 
+Across simulation scenarios, we vary preference rates (proportions of preference vs. no preference at stages 1 and 2) and response rates (probability of response to A and B at the end of stage 1).
 
 | Preference/Response Rate Scenario | Probability of Stage 1 Preference | Probability of Stage 2 Preference | Probability of Response to A | Probability of Response to B |
 | ------------------------------------ | --------------------------------- | --------------------------------- | ---------------------------- | ---------------------------- |
@@ -38,16 +36,23 @@ Across simulation scenarios, we vary preference rates (proportions of preference
 |                  b'                  |                 0.5               |                  2/3              |               0.5            |              0.5             |
 |                  c'                  |                 2/3               |                  2/3              |               0.5            |              0.5             |
 
+We also consider different distributions of the final outcome across trial pathways. We consider data generation scenarios consistent with WRRM (1-3) and consistent with BHM (4-6).
+
+For WRRM consistent data generation, we fix the expected outcome for the indifference DTRs across trial pathways but vary the expected outcome in the preference DTRs to generate different *preference augmented DTR effect types*. The different simulation scenarios are described in the tables below. RData files containing the parameter values for different simulation scenarios can be found in the folder Scenarios. 
 
 | Preference Augmented DTR Effect Type |          Description         |
 | ------------------------------------ | ---------------------------- |
 |                  1                   | Additive effects of treatment preference. Main effects of P<sub>1</sub> and P<sub>2</sub> only. |
 |                  2                   | Additive effects of treatment preference. Main effects of P<sub>1</sub> and P<sub>2</sub> and interaction effect (P<sub>1</sub>P<sub>2</sub>). |
 |                  3                   | Additive effects of treatment preference. Main effects of P<sub>1</sub> and P<sub>2</sub> and interactions with treatment (P<sub>1</sub>T<sub>1</sub> and P<sub>2</sub>T<sub>2</sub>) |
-|                  4                   | Multiplicative effects of treatment preference. Our methods assume additive effects and we wanted to test performance when this assumption is violated. |
+
+For BHM consistent data generation, we instead generate outcomes based on different hierarchical models to test the performance of BHM versus EXNEX versus DPM. See PRPP_SMART_DataGen_Scenario4.R, PRPP_SMART_DataGen_Scenario5.R, and PRPP_SMART_DataGen_Scenario6.R in the DataGeneration folder. 
 
 ## Required Software
 In addition to R, these methods require JAGS for Bayesian modelling and the R package ```rjags```. Here is a [document](https://www.jkarreth.net/files/bayes-cph_Tutorial-JAGS.pdf) and [website](https://www.r-bloggers.com/2012/03/installing-and-running-jags-on-mac-os-10-5-8/) with installation instructions. Here is where you can find the [latest user manual](https://sourceforge.net/projects/mcmc-jags/files/Manuals/) for JAGS and a [great resource](https://pdixon.stat.iastate.edu/stat534/R/Intro%20exercise.pdf) for learning how to fit a model with ```rjags```.
+
+## Two Versions of BUGS Files
+We first developed more standard/readable versions of the BHM, EXNEX, and DPM BUGS files. We then developed more efficient versions of the code to improve computation time. Rather than specifying separate models for each treatment sequence, the efficient code versions consider single, combined vectors. However, JAGS does not allow for dynamic indexing so fixed indices need to be input into JAGS to separate the vector components for each treatment sequence. The files PRPP-SMART_Design_EmbeddedDTRs.csv and PRPP-SMART_Design_Pathways.csv contain fixed indices for JAGS. DPM requires additional indices for clustering diagnostics (csv files with Diagnostic in the file name). 
 
 ## Analytic Method 1: Standard BHM and Traditional Bayesian Model (tBM)
 
