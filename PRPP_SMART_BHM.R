@@ -21,9 +21,8 @@ sigma2 = 36
 scenario = "a" # "a", "b", "c", "d", "e", or "f"
 load(paste0("scenario_", scenario, ".RData"))
 # Choose preference augmented DTR effect type and effect size (delta)
-type = 1 # 1, 2, 3, or 4
+type = 1 # 1, 2, or 3
 size = "small" # "small", "moderate", or "large"
-# Note: all combinations are valid except type 4 with a small effect size
 load(paste0("type", type, "_", size, ".RData"))
 
 ##### Calculate True Parameter and DTR Values #####
