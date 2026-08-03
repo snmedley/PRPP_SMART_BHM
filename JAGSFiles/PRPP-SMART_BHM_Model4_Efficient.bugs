@@ -1,0 +1,46 @@
+model{
+	# Specify priors -- JAGS prefers vectors
+	for(j in 1:(N_trt_seq)){
+		mu[j] ~ dnorm(mu_p[j], pow(epsilon_p, -2))
+	}
+	for(j in 1:4) {
+		p_R[j] ~ dunif(0, 1)
+	}
+	omega ~ dnorm(omega_p, pow(epsilon_p, -2))
+	delta1 ~ dnorm(delta1_p, pow(epsilon_p, -2))
+	delta2 ~ dnorm(delta2_p, pow(epsilon_p, -2))
+	tau_R ~ dnorm(0, pow(tau_sd, -2)) T(0,);
+	tau_NR ~ dnorm(0, pow(tau_sd, -2)) T(0,);
+    # Truncate normal at 0 for half-normal in JAGS
+	# https://github.com/gertvv/gemtc/issues/23	
+	
+	# Parameter model -- vectorize theta AND use non-centered parameterization
+	# That is, theta are centered at 0 instead of the corresponding mu[j]
+	#Note: JAGS requires fixed indices for declaring stochastic nodes (i.e., cannot use vectorization)
+	for(i in 1:N_paths){
+		z[i] ~ dnorm(0,1)
+		tau[i] <- ifelse(I_R[i], tau_R, tau_NR)
+		theta[i] <- mu[g_idx[i]] + z[i]*tau[i]
+	}
+	
+	# Data model
+	# response likelihood - Binomial is more efficient than Bernoulli
+	for(i in 1:4){
+		N_R[i] ~ dbinom(p_R[i], N_T1_P1[i])
+	}
+	
+	# outcome likelihood, depends on response
+	#input the index of the corresponding theta parameter (i.e., trial pathway index)
+	for(i in 1:N){
+		Y[i] ~ dnorm(theta[path_idx[i]] + R[i]*P1[i]*omega + 
+							(1-R[i])*P1[i]*delta1 + (1-R[i])*P2[i]*delta2, pow(s[i], -2))
+	}
+	
+	# DTRs
+	for(i in 1:N_dtr){
+		dtr[i] = sum(p_R[T1_idx[i]]*(theta[R_path_idx[i]] + dtr_P1[i]*omega),
+					(1-p_R[T1_idx[i]])*(theta[NR_path_idx[i]] + dtr_P1[i]*delta1 + dtr_P2[i]*delta2))
+	}
+	
+}
+	

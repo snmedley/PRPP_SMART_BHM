@@ -1,0 +1,92 @@
+model{
+	# Specify priors -- JAGS prefers vectors
+	for(j in 1:(N_trt_seq)){
+		alpha[j] ~ dunif(lb.alpha, ub.alpha)
+        gamma[j] ~ dunif(lb.gamma, ub.gamma)
+	}
+	for(j in 1:4) {
+		p_R[j] ~ dunif(0, 1)
+	}
+	omega ~ dnorm(omega_p, pow(epsilon_p, -2))
+	delta1 ~ dnorm(delta1_p, pow(epsilon_p, -2))
+	delta2 ~ dnorm(delta2_p, pow(epsilon_p, -2))
+	tau_R ~ dnorm(0, pow(tau_sd, -2)) T(0,);
+	tau_NR ~ dnorm(0, pow(tau_sd, -2)) T(0,);
+    # Truncate normal at 0 for half-normal in JAGS
+	# https://github.com/gertvv/gemtc/issues/23	
+	
+	### Parameter model
+	# Sample from inner stick-breaking processes -- allow for each pathway to potentially have its own mean
+	for(k in 1:K){
+		u0[k] ~ dbeta(1, gamma[g_idx_k[k]]) T(0.000001, 0.999999)
+		z0_norm[k] ~ dnorm(0,1)
+		mu0_mix[k] <- mu_p[g_idx_k[k]] + z0_norm[k]*epsilon_p # now centered at 0
+	}
+	# Compute inner mixing weights
+	#set first mixture weight for each group & scale the last mixture weight for each group so they sum to 1
+	w0[1] <- u0[1] #could collapse with the loop below
+	for(k in 2:K){	
+		w0[k] <- ifelse(I_first_g_idx[k], u0[k], 
+		ifelse(I_last_g_idx[k], (1 - u0[k-1]) * w0[k-1] / u0[k-1], 
+				u0[k]*(1 - u0[k-1]) * w0[k-1] / u0[k-1]))
+	}
+	# Sample inner latent variables and from outer stick-breaking processes	
+	for(k in 1:K){
+		z0[k] ~ dcat(w0[first_g_idx[g_idx_k[k]]:last_g_idx[g_idx_k[k]]]) #this is now correct -- paths ordered by group
+		u[k] ~ dbeta(1, alpha[g_idx_k[k]]) T(0.000001, 0.999999)
+		z_norm[k] ~ dnorm(0,1)
+		tau[k] <- ifelse(I_R[k], tau_R, tau_NR)
+		mu_mix[k] <- mu0_mix[first_g_idx[g_idx_k[k]]+z0[k]-1] + z_norm[k]*tau[k]
+	}
+	# Compute outer mixture weights
+	#set first mixture weight for each group & scale the last mixture weight for each group so they sum to 1
+	w[1] <- u[1] #could collapse with the loop below
+	for(k in 2:K){	
+		w[k] <- ifelse(I_first_g_idx[k], u[k], 
+		ifelse(I_last_g_idx[k], (1 - u[k-1]) * w[k-1] / u[k-1], 
+				u[k]*(1 - u[k-1]) * w[k-1] / u[k-1]))
+	}
+	# Sample outer latent variables
+	for(j in 1:N_paths){
+		z[j] ~ dcat(w[first_g_idx[g_idx[j]]:last_g_idx[g_idx[j]]])
+		theta[j] <- mu_mix[first_g_idx[g_idx[j]]+z[j]-1]
+	}
+	
+	# Data model
+	# response likelihood - Binomial is more efficient than Bernoulli
+	for(i in 1:4){
+		N_R[i] ~ dbinom(p_R[i], N_T1_P1[i])
+	}
+	
+	# outcome likelihood, depends on response
+	#input the index of the corresponding theta parameter (i.e., trial pathway index)
+	for(i in 1:N){
+		Y[i] ~ dnorm(theta[path_idx[i]] + R[i]*P1[i]*omega + 
+							(1-R[i])*P1[i]*delta1 + (1-R[i])*P2[i]*delta2, pow(s[i], -2))
+	}
+	
+	# DTRs
+	for(i in 1:N_dtr){
+		dtr[i] = sum(p_R[T1_idx[i]]*(theta[R_path_idx[i]] + dtr_P1[i]*omega),
+					(1-p_R[T1_idx[i]])*(theta[NR_path_idx[i]] + dtr_P1[i]*delta1 + dtr_P2[i]*delta2))
+	}
+	
+	### Cluster diagnostics
+	for(h in 1:N_pairs_inner){
+	   pairs0[h] <- equals(pairs0_idx_1[h], z0[pairs0_idx_2[h]])
+	}
+	for(h in 1:N_pairs_outer){
+	   pairs[h] <- equals(pairs_idx_1[h], z[pairs_idx_2[h]])
+	}
+	for(i in 1:K){
+		ctosum_inner[i] <- step(sum(pairs0[first_inner_idx[i]:last_inner_idx[i]]) - 0.1)
+		ctosum_outer[i] <- step(sum(pairs[first_outer_idx[i]:last_outer_idx[i]]) - 0.1)
+	}
+	for(g in 1:N_trt_seq){
+	   z_nmeans[g] <- sum(ctosum_inner[first_grp_k[g]:last_grp_k[g]])
+	   z_nclass[g] <- sum(ctosum_outer[first_grp_k[g]:last_grp_k[g]]) #naming with z in front so it will be last in JAGS output
+	   zI_BHM[g] <- ifelse(z_nmeans[g] == 1, ifelse(z_nclass[g] == 1, 1, 0), 0) 
+	   zI_DPM[g] <- ifelse(z_nmeans[g] == 1, ifelse(z_nclass[g] > 1, 1, 0), 0)
+	   zI_hDPM[g] <- ifelse(z_nmeans[g] > 1, 1, 0)
+	 }
+}
